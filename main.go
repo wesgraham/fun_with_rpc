@@ -3,38 +3,52 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
-	"time"
+	"net/rpc/jsonrpc"
+	"net/rpc"
+	"net"
 )
 
 func main() {
 	mode := os.Args[1]
 	fmt.Printf("You are running as a %s! \n", mode)
 	if mode == "client" {
-		if len(os.Args) < 2 {
-			fmt.Println("Need to specify more arguments")
-			os.Exit(1)
-		}
-		tickerVal, _ := strconv.Atoi(os.Args[2])
-		fmt.Printf("Current ticker value = %d \n", tickerVal)
-		client := Client{tickerVal, http.Client{Timeout:5*time.Second} }
-		if len(os.Args) > 2 {
-			for i := 3; i < len(os.Args); i++ {
-				if os.Args[i] == "increment" {
-					client.incrementTicker()
-					fmt.Printf("Current ticker value = %d \n", client.getTicker())
-				} else if os.Args[i] == "reset" {
-					client.resetTicker()
-					fmt.Printf("Current ticker value = %d \n", client.getTicker())
-				}
-			}
+		// Connect to server
+		client, err := net.Dial("tcp", "127.0.0.1:8080")
+		if err != nil {
+			log.Fatal("dialing:", err)
 		}
 
+		// Setup Synchronous call
+		price, err := strconv.Atoi(os.Args[3])
+		item := &Item{3, price}
+		var reply int
+		c := jsonrpc.NewClient(client)
+		// Call AddFive w/ params item and reply
+		err = c.Call(os.Args[2], item, &reply)
+		if err != nil {
+			panic(err.Error())
+		}
+		item.Price = reply
+		fmt.Printf("new item price = %d \n", item.Price)
+
 	} else if mode == "server" {
-		SetupRoutes()
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		computer := new(Computer)
+		server := rpc.NewServer()
+		_ = server.Register(computer)
+		server.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
+		listener, e := net.Listen("tcp", ":8080")
+		if e != nil {
+			log.Fatal("listen error:", e)
+		}
+
+		for {
+			conn, _ := listener.Accept()
+			log.Printf("new connection established\n")
+			go server.ServeCodec(jsonrpc.NewServerCodec(conn))
+		}
+
 	} else {
 		fmt.Println("Invalid type specified")
 	}
