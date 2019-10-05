@@ -1,0 +1,17 @@
+{
+	"Table": {
+		"Canadian": {
+			"key": "Canadian",
+			"type": "Canadian",
+			"colour": "Brown",
+			"age": 101
+		},
+		"Irish": {
+			"key": "Irish",
+			"type": "Irish",
+			"colour": "Orange",
+			"age": 21
+		}
+	},
+	"Lock": {}
+}
