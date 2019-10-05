@@ -1,4 +1,4 @@
-package main
+package incPoints
 
 
 //type Item struct {

@@ -1,4 +1,4 @@
-package main
+package incPoints
 
 import (
 	"fmt"
@@ -24,9 +24,9 @@ func main() {
 		price, err := strconv.Atoi(os.Args[3])
 		item := &Item{3, price}
 		var reply int
-		c := jsonrpc.NewClient(client)
+		rpcClient := jsonrpc.NewClient(client)
 		// Call AddFive w/ params item and reply
-		err = c.Call(os.Args[2], item, &reply)
+		err = rpcClient.Call(os.Args[2], item, &reply)
 		if err != nil {
 			panic(err.Error())
 		}
